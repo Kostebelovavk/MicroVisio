@@ -1,0 +1,5 @@
+0 Ellipse 220 330 30 30 1 Blue
+1 Ellipse 350 430 40 60 1 Red
+2 Rectangle 520 330 40 20 1 Green
+3 Line 0 1 1 Black
+4 Line 1 2 1 Black
