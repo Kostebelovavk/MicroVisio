@@ -8,9 +8,15 @@ import com.cscentr.microvisio.model.Rectangle;
 
 public class Recognizer {
 
-	int minX = 0, maxX = 0, minY = 0, maxY = 0;
-	int w = 0, h = 0;
-	int constant = 20;
+	private int size;
+
+	Recognizer(int isize) {
+		setSize(isize);
+	}
+
+	private int minX = 0, maxX = 0, minY = 0, maxY = 0;
+	private int w = 0, h = 0;
+	private int constant = 20;
 
 	public Figure recognize(Track track) {
 		int xbegin = track.trackRace.get(0).getX();
@@ -67,52 +73,55 @@ public class Recognizer {
 	}
 
 	public Figure recognizeLine(Track track) {
-		Point point = null, point1, point2 = null;
+		Point point = null, point1 = null, point2 = null;
 		int hatchingX = 0;
-		int hatchingY = 0;
+		//int hatchingY = 0;
 		int angel = 0;
-		double cosAlpha, d1, d2;
-		boolean waitChangeOfDirectionX = false;
-		boolean waitChangeOfDirectionY = false;
+		double cosAlpha, predCosAlpha = 3;
+		boolean waitChangeOfDirectionXMore = true;
+		//boolean waitChangeOfDirectionYMore = true;
 		for (int i = 0; i < track.trackRace.size(); i++) {
 			point = track.trackRace.get(i);
 			if (i + 2 < track.trackRace.size()) {
 				point1 = track.trackRace.get(i + 1);
 				point2 = track.trackRace.get(i + 2);
 				cosAlpha = angleBetweenPoint(point, point1, point2);
-				if (cosAlpha < 2)
-					angel++;
-			}
-			if (waitChangeOfDirectionX && point.getX() + constant >= maxX) {
-				waitChangeOfDirectionX = false;
-				hatchingX++;
-			}
-			if (!waitChangeOfDirectionX && point.getX() - constant <= minX) {
-				waitChangeOfDirectionX = true;
-				hatchingX++;
-			}
-			if (waitChangeOfDirectionY && point.getY() + constant >= maxY) {
-				waitChangeOfDirectionY = false;
-				hatchingY++;
-			}
-			if (!waitChangeOfDirectionY && point.getY() - constant <= minY) {
-				waitChangeOfDirectionY = true;
-				hatchingY++;
+				if (predCosAlpha >= 1.8)
+					if (cosAlpha < 1.8)
+						angel++;
+				predCosAlpha = cosAlpha;
+				if (waitChangeOfDirectionXMore && point.getX() > point1.getX()) {
+					waitChangeOfDirectionXMore = false;
+					hatchingX++;
+				} else if (!waitChangeOfDirectionXMore
+						&& point.getX() < point1.getX()) {
+					waitChangeOfDirectionXMore = true;
+					hatchingX++;
+				}
+				/*
+				 * if (waitChangeOfDirectionYMore && point.getY() >
+				 * point1.getY()) { waitChangeOfDirectionYMore = false;
+				 * hatchingY++; } else if (!waitChangeOfDirectionYMore &&
+				 * point.getY() < point1.getY()) { waitChangeOfDirectionYMore =
+				 * true; hatchingY++; }
+				 */
 			}
 		}
-		if (w > h && hatchingX >= 5) {
-			Line hatch = line();
+		point = track.trackRace.get(track.trackRace.size() - 1);
+		if (angel == 3) {
+			Line arrow = line(track.trackRace.get(0), point);
+			/*
+			 * if (point.getX() < track.trackRace.get(0).getX())
+			 * arrow.setArrow(-1); else
+			 */
+			arrow.setArrow(1);
+			return arrow;
+		} else if (w > h && hatchingX >= 4) {
+			Line hatch = hatchingLine();
 			hatch.setHatching(1);
 			return hatch;
-		} else if (h > w && hatchingY >= 5) {
-			Line hatch = line();
-			hatch.setHatching(-1);
-			return hatch;
-		} else if (angel >= 3) {
-			Line arrow = arrow(track.trackRace.get(0), point);
-			return arrow;
 		} else
-			return line();
+			return line(track.trackRace.get(0), point);
 
 	}
 
@@ -124,31 +133,24 @@ public class Recognizer {
 		return Math.acos((x1 * x2 + y1 * y2) / (d1 * d2));
 	}
 
-	public Line line() {
-		Point centre = new Point((int) ((maxX + minX) / 2),
-				(int) ((maxY + minY) / 2));
+	public Line hatchingLine() {
+		Point centre = new Point((int) (minX + maxX) / 2,
+				(int) (minY + maxY) / 2);
 		Line line = new Line(centre, centre.getX() - minX,
-				centre.getY() - minY, 1, null);
+				centre.getY() - minY, getSize(), null);
 		return line;
 	}
 
-	public Line arrow(Point point1, Point point2) {
-		Point centre = new Point((int) ((maxX + minX) / 2),
-				(int) ((maxY + minY) / 2));
-		Line arrow = new Line(centre, centre.getX() - minX, centre.getY()
-				- minY, 1, null);
-		if (point2.getX() < point1.getX())
-			arrow.setArrow(-1);
-		else
-			arrow.setArrow(1);
-		return arrow;
+	public Line line(Point point1, Point point2) {
+		Line line = new Line(point1, point2, getSize(), null);
+		return line;
 	}
 
 	public Rectangle rectangle() {
 		Point centre = new Point((int) ((maxX + minX) / 2),
 				(int) ((maxY + minY) / 2));
 		Rectangle rectangle = new Rectangle(centre, centre.getX() - minX,
-				centre.getY() - minY, 1, null);
+				centre.getY() - minY, getSize(), null);
 		return rectangle;
 	}
 
@@ -156,7 +158,15 @@ public class Recognizer {
 		Point centre = new Point((int) ((maxX + minX) / 2),
 				(int) ((maxY + minY) / 2));
 		Ellipse ellipse = new Ellipse(centre, centre.getX() - minX,
-				centre.getY() - minY, 1, null);
+				centre.getY() - minY, getSize(), null);
 		return ellipse;
+	}
+
+	public int getSize() {
+		return size;
+	}
+
+	public void setSize(int size) {
+		this.size = size;
 	}
 }

@@ -3,6 +3,8 @@ package com.cscentr.microvisio;
 import com.cscentr.microvisio.draw.Draw;
 import com.cscentr.microvisio.model.Model;
 import com.cscentr.microvisio.readWrite.Reader;
+import com.cscentr.microvisio.readWrite.Writer;
+
 import android.app.Activity;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -13,7 +15,15 @@ public class FullscreenActivity extends Activity {
 
 	Model model;
 	Reader read;
-
+	Writer write;
+	
+	 public class FileDialogDepends{
+		    public FileDialogDepends refresh(){
+		       refresh();
+		       return this;
+		    }
+		 }
+	 
 	// MY
 
 	@Override
@@ -21,8 +31,12 @@ public class FullscreenActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		model = new Model();
 		read = new Reader();
+		write = new Writer();
+		
 		Resources res = this.getResources();
 		read.readFromTxtFile(res.openRawResource(R.raw.textfile), model);
+		write.writeFileSD("Test1", model);
+		new FileDialog(this).openFileDialog(new FileDialogDepends());
 		// Узнаем размеры экрана из ресурсов
 		DisplayMetrics displaymetrics = getResources().getDisplayMetrics();
 		Draw d = new Draw(this, model, displaymetrics.widthPixels,

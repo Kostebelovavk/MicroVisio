@@ -6,8 +6,8 @@ public class Line extends Figure {
 	private int hatching; // 0-не удаление, 1-горизантальное, -1-вертикальное
 	private int arrow; // 0-не стрелка, 1-стрелка, -1-стрелка на оборот
 
-	public Line(Point centre, int rx, int ry, int isize, String sColor) {
-		super(centre, rx, ry, isize, sColor, "Line");
+	public Line(Point pleftTop, Point prightBottom, int isize, String sColor) {
+		super(pleftTop, prightBottom, isize, sColor, "Line");
 		setHatching(0);
 		setArrow(0);
 	}
@@ -27,6 +27,10 @@ public class Line extends Figure {
 		if (first.getPoint().more(second.getPoint()))
 			recalculation();
 
+	}
+
+	public Line(Point pCentre, int irx, int iry, int isize, String sColor) {
+		super(pCentre, irx, iry, isize, sColor, "Line");
 	}
 
 	public void recalculation() {

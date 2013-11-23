@@ -24,7 +24,7 @@ import android.view.View;
 public class Draw extends View {
 	public Model model;
 	private Track track = new Track();
-	private Recognizer recognizer = new Recognizer();
+	private Recognizer recognizer = new Recognizer(1);
 	private Canvas canvas;
 	private Paint paint = new Paint();
 	private float density;
@@ -41,6 +41,7 @@ public class Draw extends View {
 	private ArrayList<Finger> fingers = new ArrayList<Finger>(); // Все пальцы,
 																	// находящиеся
 																	// на экране
+	private double maxArrowSize = 30;
 
 	public Canvas getCanvas() {
 		return canvas;
@@ -150,6 +151,7 @@ public class Draw extends View {
 		mypaint = selectColor(mypaint, rectangle.getColor());
 		mypaint.setStrokeWidth(rectangle.getSize() * density);
 		mypaint.setStyle(Style.STROKE);
+		rectangle.calculatePoint();
 		canvas.drawRect(rectangle.getLeftTop().getX(), rectangle.getLeftTop()
 				.getY(), rectangle.getRightBottom().getX(), rectangle
 				.getRightBottom().getY(), mypaint);
@@ -159,10 +161,10 @@ public class Draw extends View {
 		Paint mypaint = new Paint();
 		mypaint = selectColor(mypaint, line.getColor());
 		mypaint.setStrokeWidth(line.getSize() * density);
-		if (line.isArrow() == -1) {
+		/*if (line.isArrow() == -1) {
 			line.recalculation();
 			line.setArrow(1);
-		}
+		}*/
 		if (line.getFirstFigure().getPoint()
 				.more(line.getSecondFigure().getPoint())
 				&& line.isArrow() == 0)
@@ -235,6 +237,8 @@ public class Draw extends View {
 				double h = Math.abs(second.getY() - first.getY()) * 0.3;
 				if (h > w)
 					w = h;
+				if (w >= maxArrowSize)
+					w = maxArrowSize;
 				double angelLine = Math.atan2(first.getX() - second.getX(),
 						first.getY() - second.getY());
 				canvas.drawLine((float) second.getX(), (float) second.getY(),
@@ -259,28 +263,16 @@ public class Draw extends View {
 		if (figure.getClassName().equals("Line")) {
 			Line line = (Line) figure;
 			if (line.getFirstFigure() == null)
-				if (!line.setFirstFigure(model.isInsideAndNotLine(new Point(
-						line.getPoint().getX() - line.getRx(), line.getPoint()
-								.getY() - line.getRy())))) {
-					if (!line.setFirstFigure(model
-							.isInsideAndNotLine(new Point(line.getPoint()
-									.getX() - line.getRx(), line.getPoint()
-									.getY() + line.getRy())))) {
-						model.deleteFigure(line);
-						return;
-					}
+				if (!line.setFirstFigure(model.isInsideAndNotLine(line
+						.getLeftTop()))) {
+					model.deleteFigure(line);
+					return;
 				}
 			if (line.getSecondFigure() == null)
-				if (!line.setSecondFigure(model.isInsideAndNotLine(new Point(
-						line.getPoint().getX() + line.getRx(), line.getPoint()
-								.getY() + line.getRy())))) {
-					if (!line.setSecondFigure(model
-							.isInsideAndNotLine(new Point(line.getPoint()
-									.getX() + line.getRx(), line.getPoint()
-									.getY() - line.getRy())))) {
-						model.deleteFigure(line);
-						return;
-					}
+				if (!line.setSecondFigure(model.isInsideAndNotLine(line
+						.getRightBottom()))) {
+					model.deleteFigure(line);
+					return;
 				}
 			drawObject(canvas, (Line) figure);
 		} else if (figure.getClassName().equals("Ellipse"))
@@ -343,20 +335,22 @@ public class Draw extends View {
 					point1.getY(), paint);
 		}
 
-		/*for (int i = 0; i < fingers.size(); i++) { // Отображаем все касания
-			// виде кругов
-			canvas.drawCircle(fingers.get(i).Now.getX(),
-					fingers.get(i).Now.getY(), 20 * density, paint);
-		}*/
+		/*
+		 * for (int i = 0; i < fingers.size(); i++) { // Отображаем все касания
+		 * // виде кругов canvas.drawCircle(fingers.get(i).Now.getX(),
+		 * fingers.get(i).Now.getY(), 20 * density, paint); }
+		 */
 
 		// paint.setTextSize(10);
 		// canvas.drawText(text, 250, 150, paint);
 	}
 
 	int countOfFinger = 0;
+	int rx = 0, ry = 0;
 
 	public boolean onTouchEvent(MotionEvent e) {
-		int id = e.getPointerId(e.getActionIndex()); // Идентификатор пальца
+		int index = e.getActionIndex();
+		int id = e.getPointerId(index); // Идентификатор пальца
 		/*
 		 * if (e.getAction() == MotionEvent.ACTION_POINTER_DOWN) {
 		 * fingers.add(e.getActionIndex(), new Finger(id, (int) e.getX(), (int)
@@ -368,13 +362,14 @@ public class Draw extends View {
 		int action = e.getActionMasked(); // Действие
 		if (action == MotionEvent.ACTION_DOWN
 				|| action == MotionEvent.ACTION_POINTER_DOWN) {
-			fingers.add(e.getActionIndex(), new Finger(id, (int) e.getX(),
-					(int) e.getY()));
+			fingers.add(index, new Finger(id, (int) e.getX(index), (int) e.getY(index)));
 			previous = new Point((int) e.getX(), (int) e.getY());
 			setMovingFigure(model.isBoundary(previous));
 			// movingFigure = model.isBoundary(previous);
-			if (movingFigure != null) {
+			if (getMovingFigure() != null) {
 				setMode(2);
+				rx = getMovingFigure().getRx();
+				ry = getMovingFigure().getRy();
 				// mode = 2;
 				countOfFinger++;
 			} else {
@@ -386,51 +381,59 @@ public class Draw extends View {
 		} else
 		/*
 		 * if (e.getAction() == MotionEvent.ACTION_POINTER_UP) {
-		 * fingers.remove(fingers.get(e.getActionIndex())); // Удаляем // палец,
-		 * // который был // отпущен if (mode == 3) { countOfFinger--; } }
+		 * fingers.remove(fingers.get(index)); // Удаляем // палец, // который
+		 * был // отпущен if (mode == 3) { countOfFinger--; } }
 		 */
 		if (action == MotionEvent.ACTION_UP
 				|| action == MotionEvent.ACTION_POINTER_UP) {
-			fingers.remove(fingers.get(e.getActionIndex())); // Удаляем
+			Finger fing = fingers.get(index);
+			if (fing != null)
+				fingers.remove(fing); // Удаляем
 			// палец,
 			// который был
 			// отпущен
 			if (mode == 1) {
-				recognizer = new Recognizer();
-				Figure figure = recognizer.recognize(track);
-				if (figure != null) {
-					if (figure.getClassName().equals("Line")) {
-						Line line = (Line) figure;
-						if (line.isHatching() != 0) {
-							line.setFirstFigure(model
-									.isInsideAndNotLine(new Point(line
-											.getPoint().getX(), line.getPoint()
-											.getY())));
-							if (line.getFirstFigure() != null) {
-								model.deleteFigure(line.getFirstFigure());
-							} else {
-								line.setFirstFigure(model.isInsideLine(
-										new Point(line.getPoint().getX()
-												- line.getRx(), line.getPoint()
-												.getY() - line.getRy()),
-										new Point(line.getPoint().getX()
-												+ line.getRx(), line.getPoint()
-												.getY() + line.getRy())));
+				recognizer = new Recognizer(1);
+				if (track.trackRace.size() > 2) {
+					Figure figure = recognizer.recognize(track);
+					if (figure != null) {
+						if (figure.getClassName().equals("Line")) {
+							Line line = (Line) figure;
+							if (line.isHatching() != 0) {
+								line.setFirstFigure(model
+										.isInsideAndNotLine(new Point(line
+												.getPoint().getX(), line
+												.getPoint().getY())));
 								if (line.getFirstFigure() != null) {
 									model.deleteFigure(line.getFirstFigure());
+								} else {
+									line.setFirstFigure(model.isInsideLine(
+											new Point(line.getPoint().getX()
+													- line.getRx(), line
+													.getPoint().getY()
+													- line.getRy()), new Point(
+													line.getPoint().getX()
+															+ line.getRx(),
+													line.getPoint().getY()
+															+ line.getRy())));
+									if (line.getFirstFigure() != null) {
+										model.deleteFigure(line
+												.getFirstFigure());
+									}
 								}
+								track = new Track();
+								invalidate();
+								return true;
 							}
-							track = new Track();
-							invalidate();
-							return true;
 						}
+						figure.setColor("Black");
+						model.addFigure(figure);
 					}
-					figure.setColor("Black");
-					model.addFigure(figure);
 				}
 				track = new Track();
 			} else {
 				countOfFinger--;
+			    setMode(0);
 			}
 			invalidate();
 		} else if (action == MotionEvent.ACTION_MOVE) {
@@ -443,30 +446,44 @@ public class Draw extends View {
 			if (mode == 1) {
 				track.addPoint(point);
 			} else {
-				if (countOfFinger == 2) {
+				if (fingers.size() >= 2) {
 					int yDis, xDis;
-					yDis = (fingers.get(0).Now.getY() - fingers.get(1).Now
+					yDis = Math.abs(fingers.get(0).Now.getY() - fingers.get(1).Now
 							.getY())
-							- (fingers.get(0).Before.getY() - fingers.get(1).Before
+							- Math.abs(fingers.get(0).Before.getY() - fingers.get(1).Before
 									.getY());
-					xDis = (fingers.get(0).Now.getX() - fingers.get(1).Now
+					xDis = Math.abs(fingers.get(0).Now.getX() - fingers.get(1).Now
 							.getX())
-							- (fingers.get(0).Before.getX() - fingers.get(1).Before
-									.getX());
-					/*float now = checkDistance(fingers.get(0).Now, fingers.get(1).Now);
-				    float before = checkDistance(fingers.get(0).Before, fingers.get(1).Before); */
-				    Figure fig = getMovingFigure();
+							- Math.abs(fingers.get(0).Before.getX() - fingers.get(1).Before
+									.getX()); /*
+											 * float now =
+											 * checkDistance(fingers.get(0).Now,
+											 * fingers.get(1).Now); float before
+											 * =
+											 * checkDistance(fingers.get(0).Before
+											 * , fingers.get(1).Before);
+											 */
+					Figure fig = getMovingFigure();
 					int i = model.figureList.indexOf(fig);
-					fig.setRx(fig.getRx() + yDis);
-					fig.setRy(fig.getRy() + xDis);
+					if (rx + xDis > 10) {
+						while (rx + xDis + fig.getPoint().getX() > bitMapWidth)
+							xDis = xDis - 1;
+						fig.setRx(rx + xDis);
+					} else
+						fig.setRx(10);
+					if (ry + yDis > 10) {
+						while (ry + yDis + fig.getPoint().getY() > bitMapHeight)
+							yDis = yDis - 1;
+						fig.setRy(ry + yDis);
+					} else
+						fig.setRy(10);
 					model.figureList.set(i, fig);
 				} else if (getMode() == 2) {
-					  Figure fig = getMovingFigure();
+					Figure fig = getMovingFigure();
 					int i = model.figureList.indexOf(fig);
 					fig.move(new Point(fig.getPoint().getX()
-							+ (point.getX() - previous.getX()), fig
-							.getPoint().getY()
-							+ (point.getY() - previous.getY())));
+							+ (point.getX() - previous.getX()), fig.getPoint()
+							.getY() + (point.getY() - previous.getY())));
 					model.figureList.set(i, fig);
 					previous = new Point(point.getX(), point.getY());
 				}
@@ -488,10 +505,13 @@ public class Draw extends View {
 		return true;
 	}
 
-	static float checkDistance(Point p1, Point p2){	// Функция вычисления расстояния между двумя точками
-	    return FloatMath.sqrt((p1.x - p2.x)*(p1.x - p2.x)+(p1.y - p2.y)*(p1.y - p2.y));
+	static float checkDistance(Point p1, Point p2) { // Функция вычисления
+														// расстояния между
+														// двумя точками
+		return FloatMath.sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y)
+				* (p1.y - p2.y));
 	}
-	
+
 	public int getMode() {
 		return mode;
 	}

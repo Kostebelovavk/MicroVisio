@@ -1,6 +1,5 @@
 package com.cscentr.microvisio.model;
 
-
 public class Rectangle extends Figure {
 
 	private Point leftTop;
@@ -12,7 +11,9 @@ public class Rectangle extends Figure {
 	public Rectangle(Point pCentre, int irx, int iry, int isize, String sColor) {
 		super(pCentre, irx, iry, isize, sColor, "Rectangle");
 		calculatePoint();
-		constant = 4;
+		constant = 10;
+		if ((int) ((irx + iry) / 7) > constant)
+			constant = (int)((irx + iry) / 7);
 	}
 
 	public void calculatePoint() {
@@ -31,17 +32,28 @@ public class Rectangle extends Figure {
 	}
 
 	public boolean isBoundary(Point point) {
-		if (((point.x < leftTop.x + constant)
-				&& (point.x > leftTop.x - constant) && (point.y >= leftTop.y) && (point.y <= leftBottom.y))
-				|| ((point.y > leftTop.y - constant)
-						&& (point.y < leftTop.y + constant)
-						&& (point.x >= leftTop.x) && (point.x <= rightTop.x))
-				|| ((point.x > rightTop.x - constant)
-						&& (point.x < rightTop.x + constant)
-						&& (point.y >= rightTop.y) && (point.y <= rightBottom.y))
-				|| ((point.y > rightBottom.y - constant)
-						&& (point.y < rightBottom.y + constant)
-						&& (point.x >= leftBottom.x) && (point.x <= rightBottom.x)))
+		/*
+		 * if (((point.x < leftTop.x + constant) && (point.x > leftTop.x -
+		 * constant) && (point.y >= leftTop.y) && (point.y <= leftBottom.y)) ||
+		 * ((point.y > leftTop.y - constant) && (point.y < leftTop.y + constant)
+		 * && (point.x >= leftTop.x) && (point.x <= rightTop.x)) || ((point.x >
+		 * rightTop.x - constant) && (point.x < rightTop.x + constant) &&
+		 * (point.y >= rightTop.y) && (point.y <= rightBottom.y)) || ((point.y >
+		 * rightBottom.y - constant) && (point.y < rightBottom.y + constant) &&
+		 * (point.x >= leftBottom.x) && (point.x <= rightBottom.x))) return
+		 * true; else return false;
+		 */
+		if (inside(point, constant) && !inside(point, -constant))
+			return true;
+		else
+			return false;
+	}
+
+	public boolean inside(Point point, int constant) {
+		if ((point.y >= leftTop.y - constant)
+				&& (point.y <= leftBottom.y + constant)
+				&& (point.x >= leftTop.x - constant)
+				&& (point.x <= rightTop.x + constant))
 			return true;
 		else
 			return false;

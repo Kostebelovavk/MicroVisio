@@ -8,14 +8,24 @@ public class Figure {
 	private int rx; // рассто€ние до вершины по оси x
 	private int ry;
 	private int size;
+	private Point leftTop;
+	private Point rightBottom;
 	private String color;
 	private String className;
 	private String text; // “екст внутри фигуры
 
 	public Figure(Point pcenter, int irx, int iry, int isize, String sColor,String sClassName) {
-		centre = pcenter;
+		setPoint(pcenter);
 		setRx(irx);
 		setRy(iry);
+		setSize(isize);
+		setColor(sColor);
+		setClassName(sClassName);
+	}
+	
+	public Figure(Point pleftTop, Point prightBottom, int isize, String sColor,String sClassName) {
+		setLeftTop(pleftTop);
+		setRightBottom(prightBottom);
 		setSize(isize);
 		setColor(sColor);
 		setClassName(sClassName);
@@ -32,8 +42,7 @@ public class Figure {
 	}
 
 	public void setPoint(Point point) {
-		centre.x = point.x;
-		centre.y = point.y;
+		centre = point;
 	}
 
 	public int getRy() {
@@ -93,5 +102,21 @@ public class Figure {
 	}
 	public void setClassName(String className) {
 		this.className = className;
+	}
+
+	public Point getLeftTop() {
+		return leftTop;
+	}
+
+	public void setLeftTop(Point leftTop) {
+		this.leftTop = leftTop;
+	}
+
+	public Point getRightBottom() {
+		return rightBottom;
+	}
+
+	public void setRightBottom(Point rightBottom) {
+		this.rightBottom = rightBottom;
 	}
 }

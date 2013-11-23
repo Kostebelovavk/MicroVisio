@@ -15,8 +15,11 @@ public class Finger {
         enabled = true;
     }
     
-    public void setNow(int x, int y){
-            Before = Now;
-            Now = new Point(x, y);
+    public void setNowAndBefore(int x, int y){
+    	 Before = Now;
+         Now = new Point(x, y);
     }
+    public void setNow(int x, int y){
+        Now = new Point(x, y);
+   }
 }
