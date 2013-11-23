@@ -18,8 +18,13 @@ public class FullscreenActivity extends Activity {
 	Writer write;
 	
 	 public class FileDialogDepends{
+		    public FileDialogDepends refresh(String filename){
+		       read.readFileSD(filename, model);
+		     // refresh();
+		       return this;
+		    }
 		    public FileDialogDepends refresh(){
-		       refresh();
+		        refresh();
 		       return this;
 		    }
 		 }
@@ -35,7 +40,8 @@ public class FullscreenActivity extends Activity {
 		
 		Resources res = this.getResources();
 		read.readFromTxtFile(res.openRawResource(R.raw.textfile), model);
-		write.writeFileSD("Test1", model);
+		write.writeFileSD("Test1.txt", model);
+		model = new Model();
 		new FileDialog(this).openFileDialog(new FileDialogDepends());
 		// Узнаем размеры экрана из ресурсов
 		DisplayMetrics displaymetrics = getResources().getDisplayMetrics();

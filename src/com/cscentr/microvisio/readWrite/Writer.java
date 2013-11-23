@@ -44,29 +44,53 @@ public class Writer {
 			iter = model.getIter();
 			int i = 0;
 			while (iter.hasNext()) {
-				i++;
 				Figure figure = iter.next();
 				if (figure.getClassName().equals("Line")) {
 					Line line = (Line) figure;
 					int ID1 = model.figureList.indexOf(line.getFirstFigure());
 					int ID2 = model.figureList.indexOf(line.getSecondFigure());
-					bw.write(i+" ");
-					bw.write(ID1+" "+ID2+" ");
-					bw.write(figure.getSize()+" ");
-					bw.write(figure.getColor().toString()+" ");
-					bw.write(figure.getClassName().toString()+"\n");
+					bw.write(i + " ");
+					bw.write(figure.getClassName().toString() + " ");
+					bw.write(ID1 + " " + ID2 + " ");
+					bw.write(figure.getSize() + " ");
+					bw.write(figure.getColor().toString() + "\n");
+				} else {
+					bw.write(i + " ");
+					bw.write(figure.getClassName().toString() + " ");
+					bw.write(figure.getPoint().getX() + " "
+							+ figure.getPoint().getY() + " ");
+					bw.write(figure.getRx() + " ");
+					bw.write(figure.getRy() + " ");
+					bw.write(figure.getSize() + " ");
+					bw.write(figure.getColor().toString()+"\n");
 				}
-				else {
-					bw.write(i+" ");
-					bw.write(figure.getPoint().getX()+" "+figure.getPoint().getY()+" ");
-					bw.write(figure.getRx()+" ");
-					bw.write(figure.getRy()+" ");
-					bw.write(figure.getSize()+" ");
-					bw.write(figure.getColor().toString()+" ");
-					bw.write(figure.getClassName().toString()+"\n");
+				i++;
+				if (i == model.figureList.size() - 1) {
+					figure = iter.next();
+					if (figure.getClassName().equals("Line")) {
+						Line line = (Line) figure;
+						int ID1 = model.figureList.indexOf(line
+								.getFirstFigure());
+						int ID2 = model.figureList.indexOf(line
+								.getSecondFigure());
+						bw.write(i + " ");
+						bw.write(figure.getClassName().toString() + " ");
+						bw.write(ID1 + " " + ID2 + " ");
+						bw.write(figure.getSize() + " ");
+						bw.write(figure.getColor().toString());
+					} else {
+						bw.write(i + " ");
+						bw.write(figure.getClassName().toString() + " ");
+						bw.write(figure.getPoint().getX() + " "
+								+ figure.getPoint().getY() + " ");
+						bw.write(figure.getRx() + " ");
+						bw.write(figure.getRy() + " ");
+						bw.write(figure.getSize() + " ");
+						bw.write(figure.getColor().toString());
+					}
 				}
 			}
-		//	bw.write("Содержимое файла на SD");
+			// bw.write("Содержимое файла на SD");
 			// закрываем поток
 			bw.close();
 			Log.d(LOG_TAG, "Файл записан на SD: " + sdFile.getAbsolutePath());

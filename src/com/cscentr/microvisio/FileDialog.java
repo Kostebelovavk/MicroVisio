@@ -32,7 +32,7 @@ public class FileDialog extends AlertDialog{
    FileDialogDepends fileDialogDepends;
 
    public static String FILENAME_FILTER = 
-      "(?i)^feeder\\-.*?\\.html$";
+      "(?i)^feeder\\-.*?\\.txt$";
    public static String CURRENT_PATH = "/sdcard";
    
    public static String ROOT_PATH = 
@@ -46,7 +46,8 @@ public class FileDialog extends AlertDialog{
       filenameFilter=new FilenameFilter(){
          @Override
          public boolean accept(File directory, String fileName) {
-            return fileName.matches(FILENAME_FILTER);
+            return true;
+           // fileName.matches(FILENAME_FILTER);
          }
       };
    }
@@ -122,9 +123,9 @@ public class FileDialog extends AlertDialog{
       //гдеяэ охьел опнжедспш, йнрнпше пеюкхгсчряъ, йнцдю
       //тюик бшапюм. рн еярэ нрйпшрхе тюикю, напюанрйю,
       //йнохпнбюмхе х рюй дюкее.
-
+	   
       //гДЕЯЭ ОПНБНДХЛ БГЮХЛНЯБЪГЭ Я БШГШБЮЧЫЕИ activity.
-      fileDialogDepends.refresh();
+      fileDialogDepends.refresh(file.getName());
 
    }
 
