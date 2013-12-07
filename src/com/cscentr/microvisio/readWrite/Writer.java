@@ -53,7 +53,7 @@ public class Writer {
 					bw.write(figure.getClassName().toString() + " ");
 					bw.write(ID1 + " " + ID2 + " ");
 					bw.write(figure.getSize() + " ");
-					bw.write(figure.getColor().toString() + "\n");
+					bw.write(figure.getColor() + "\n");
 				} else {
 					bw.write(i + " ");
 					bw.write(figure.getClassName().toString() + " ");
@@ -62,7 +62,7 @@ public class Writer {
 					bw.write(figure.getRx() + " ");
 					bw.write(figure.getRy() + " ");
 					bw.write(figure.getSize() + " ");
-					bw.write(figure.getColor().toString()+"\n");
+					bw.write(figure.getColor()+"\n");
 				}
 				i++;
 				if (i == model.figureList.size() - 1) {
@@ -77,7 +77,7 @@ public class Writer {
 						bw.write(figure.getClassName().toString() + " ");
 						bw.write(ID1 + " " + ID2 + " ");
 						bw.write(figure.getSize() + " ");
-						bw.write(figure.getColor().toString());
+						bw.write(figure.getColor()+" ");
 					} else {
 						bw.write(i + " ");
 						bw.write(figure.getClassName().toString() + " ");
@@ -86,7 +86,7 @@ public class Writer {
 						bw.write(figure.getRx() + " ");
 						bw.write(figure.getRy() + " ");
 						bw.write(figure.getSize() + " ");
-						bw.write(figure.getColor().toString());
+						bw.write(figure.getColor()+" ");
 					}
 				}
 			}

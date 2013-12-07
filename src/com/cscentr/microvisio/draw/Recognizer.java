@@ -137,12 +137,12 @@ public class Recognizer {
 		Point centre = new Point((int) (minX + maxX) / 2,
 				(int) (minY + maxY) / 2);
 		Line line = new Line(centre, centre.getX() - minX,
-				centre.getY() - minY, getSize(), null);
+				centre.getY() - minY, getSize(), -16777216);
 		return line;
 	}
 
 	public Line line(Point point1, Point point2) {
-		Line line = new Line(point1, point2, getSize(), null);
+		Line line = new Line(point1, point2, getSize(), -16777216);
 		return line;
 	}
 
@@ -150,7 +150,7 @@ public class Recognizer {
 		Point centre = new Point((int) ((maxX + minX) / 2),
 				(int) ((maxY + minY) / 2));
 		Rectangle rectangle = new Rectangle(centre, centre.getX() - minX,
-				centre.getY() - minY, getSize(), null);
+				centre.getY() - minY, getSize(), -16777216);
 		return rectangle;
 	}
 
@@ -158,7 +158,7 @@ public class Recognizer {
 		Point centre = new Point((int) ((maxX + minX) / 2),
 				(int) ((maxY + minY) / 2));
 		Ellipse ellipse = new Ellipse(centre, centre.getX() - minX,
-				centre.getY() - minY, getSize(), null);
+				centre.getY() - minY, getSize(), -16777216);
 		return ellipse;
 	}
 

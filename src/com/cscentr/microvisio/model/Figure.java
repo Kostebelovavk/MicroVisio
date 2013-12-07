@@ -10,11 +10,11 @@ public class Figure {
 	private int size;
 	private Point leftTop;
 	private Point rightBottom;
-	private String color;
+	private int color;
 	private String className;
-	private String text; // Текст внутри фигуры
+	private String text = ""; // Текст внутри фигуры
 
-	public Figure(Point pcenter, int irx, int iry, int isize, String sColor,String sClassName) {
+	public Figure(Point pcenter, int irx, int iry, int isize, int sColor,String sClassName) {
 		setPoint(pcenter);
 		setRx(irx);
 		setRy(iry);
@@ -23,7 +23,7 @@ public class Figure {
 		setClassName(sClassName);
 	}
 	
-	public Figure(Point pleftTop, Point prightBottom, int isize, String sColor,String sClassName) {
+	public Figure(Point pleftTop, Point prightBottom, int isize, int sColor,String sClassName) {
 		setLeftTop(pleftTop);
 		setRightBottom(prightBottom);
 		setSize(isize);
@@ -77,11 +77,11 @@ public class Figure {
 		text = sText;
 	}
 
-	public String getColor() {
+	public int getColor() {
 		return color;
 	}
 
-	public void setColor(String color) {
+	public void setColor(int color) {
 		this.color = color;
 	}
 

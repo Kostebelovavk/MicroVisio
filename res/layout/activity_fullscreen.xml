@@ -10,25 +10,7 @@
          is needed to present your content, e.g. VideoView, SurfaceView,
          TextureView, etc.
     -->
-  
-    <item
-        android:id="@+id/action_cat1"
-        android:orderInCategory="100"
-        android:showAsAction="never"
-        android:title="@string/action_cat_male"/>
     
-    <item
-        android:id="@+id/action_cat2"
-        android:orderInCategory="100"
-        android:showAsAction="never"
-        android:title="@string/action_cat_female"/>
-    
-    <item
-        android:id="@+id/action_cat3"
-        android:orderInCategory="100"
-        android:showAsAction="never"
-        android:title="@string/action_kitten"/>
-
     <TextView
         android:id="@+id/fullscreen_content"
         android:layout_width="match_parent"

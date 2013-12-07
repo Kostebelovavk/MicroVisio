@@ -10,16 +10,23 @@ import com.cscentr.microvisio.model.Model;
 import com.cscentr.microvisio.model.Point;
 import com.cscentr.microvisio.model.Rectangle;
 
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
+import android.graphics.RectF;
+import android.os.Handler;
+import android.os.Vibrator;
 import android.util.FloatMath;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.EditText;
 
 public class Draw extends View {
 	public Model model;
@@ -27,17 +34,26 @@ public class Draw extends View {
 	private Recognizer recognizer = new Recognizer(1);
 	private Canvas canvas;
 	private Paint paint = new Paint();
-	private float density;
+	private static float density;
 	private Bitmap image; // Содержимое холста
 	private int bitMapWidth;
 	private int bitMapHeight;
+	private int width;
+	private int height;
+	private int zoomWidth;
 	private Figure movingFigure = null;
 	String text = "";
 	private int mode = 1;
+	private ColorPickerDialog colorDialog;
 	private Point previous, next;
-	private float zoom = 500; // Расстояние до холста
+	private float zoom; // Расстояние до холста
 	private Point position = new Point(0, 0); // Позиция холста
-
+	private boolean drawingMode = false;
+	// private Vibrator vibrator;
+	// private Handler handler = new Handler();
+	private long lastTapTime;
+	private Point lastTapPosition;
+	private Point cursor = new Point(0, 0);
 	private ArrayList<Finger> fingers = new ArrayList<Finger>(); // Все пальцы,
 																	// находящиеся
 																	// на экране
@@ -49,6 +65,14 @@ public class Draw extends View {
 
 	public void setCanvas(Canvas canvas) {
 		this.canvas = canvas;
+	}
+
+	public boolean getDrawingMode() {
+		return drawingMode;
+	}
+
+	public void setgetDrawingMode(boolean drawing) {
+		drawingMode = drawing;
 	}
 
 	public Paint getPaint() {
@@ -123,34 +147,63 @@ public class Draw extends View {
 		this.bitMapHeight = bitMapHeight;
 	}
 
-	public Draw(Context context, Model model1, int width, int height) {
+	public Draw(Context context, Model model1, int width1, int height1) {
 		super(context);
 		model = model1;
-		density = getResources().getDisplayMetrics().density;
-		bitMapWidth = width;
-		bitMapHeight = height;
+		setDensity(getResources().getDisplayMetrics().density);
+		bitMapWidth = Math.max(width1 * 2, height1);
+		width = width1;
+		height = height1;
+		zoomWidth = Math.max(width1, height1);
+		zoom = zoomWidth;
 		this.setBackgroundColor(Color.GRAY); // Устанавливаем серый цвет фона
-		paint.setStrokeWidth(2 * density); // Устанавливаем ширину кисти в 2dp
-		image = Bitmap
-				.createBitmap(bitMapWidth, bitMapHeight, Config.ARGB_4444);
+		paint.setStrokeWidth(2 * getDensity()); // Устанавливаем ширину кисти в
+												// 2dp
+		image = Bitmap.createBitmap(bitMapWidth, bitMapWidth, Config.ARGB_4444);
 		// Создаём содержимое холста
 		canvas = new Canvas(image); // Создаём холст
 		canvas.drawColor(Color.WHITE); // Закрашиваем его белым цветом
+		paint.setColor(Color.BLACK);
+		// vibrator =
+		// (Vibrator)context.getSystemService(Context.VIBRATOR_SERVICE);
+		/*
+		 * new ColorPickerDialog(context, new
+		 * ColorPickerDialog.OnColorChangedListener() { public void
+		 * colorChanged(int color) { //you change your color when the color is
+		 * changed in the dialog paint.setColor(color); } },
+		 * paint.getColor()).show();
+		 */
 	}
 
 	void drawObject(Canvas canvas, Ellipse ellipse) {
 		Paint mypaint = new Paint();
-		mypaint = selectColor(mypaint, ellipse.getColor());
-		mypaint.setStrokeWidth(ellipse.getSize() * density);
+		mypaint.setStyle(Paint.Style.FILL);
+		mypaint.setColor(ellipse.getColor());
+		mypaint.setStrokeWidth(ellipse.getSize() * getDensity());
 		mypaint.setStyle(Style.STROKE);
-		canvas.drawOval(ellipse.getRectf(), mypaint);
+		if (!ellipse.getText().equals(""))
+		{
+			mypaint.setTextSize(15);
+			canvas.drawText(ellipse.getText(), ellipse.getPoint().getX(), ellipse.getPoint().getY(), mypaint);
+		}
+		RectF rect = new RectF(ellipse.getPoint().getX() - ellipse.getRx(),
+				ellipse.getPoint().getY() - ellipse.getRy(), ellipse.getPoint()
+						.getX() + ellipse.getRx(), ellipse.getPoint().getY()
+						+ ellipse.getRy());
+		canvas.drawOval(rect, mypaint);
 	}
 
 	void drawObject(Canvas canvas, Rectangle rectangle) {
 		Paint mypaint = new Paint();
-		mypaint = selectColor(mypaint, rectangle.getColor());
-		mypaint.setStrokeWidth(rectangle.getSize() * density);
+		mypaint.setStyle(Paint.Style.FILL);
+		mypaint.setColor(rectangle.getColor());
+		mypaint.setStrokeWidth(rectangle.getSize() * getDensity());
 		mypaint.setStyle(Style.STROKE);
+		if (!rectangle.getText().equals(""))
+		{
+			mypaint.setTextSize(15);
+			canvas.drawText(rectangle.getText(), rectangle.getPoint().getX(), rectangle.getPoint().getY(), mypaint);
+		}
 		rectangle.calculatePoint();
 		canvas.drawRect(rectangle.getLeftTop().getX(), rectangle.getLeftTop()
 				.getY(), rectangle.getRightBottom().getX(), rectangle
@@ -159,12 +212,11 @@ public class Draw extends View {
 
 	void drawObject(Canvas canvas, Line line) {
 		Paint mypaint = new Paint();
-		mypaint = selectColor(mypaint, line.getColor());
-		mypaint.setStrokeWidth(line.getSize() * density);
-		/*if (line.isArrow() == -1) {
-			line.recalculation();
-			line.setArrow(1);
-		}*/
+		mypaint.setColor(line.getColor());
+		mypaint.setStrokeWidth(line.getSize() * getDensity());
+		/*
+		 * if (line.isArrow() == -1) { line.recalculation(); line.setArrow(1); }
+		 */
 		if (line.getFirstFigure().getPoint()
 				.more(line.getSecondFigure().getPoint())
 				&& line.isArrow() == 0)
@@ -281,51 +333,44 @@ public class Draw extends View {
 			drawObject(canvas, (Rectangle) figure);
 	}
 
-	Paint selectColor(Paint paint, String color) {
-		Colors colors = Colors.getType(color);
-		if (colors != null) {
-			switch (colors) {
-			case BLACK:
-				paint.setColor(Color.BLACK);
-				return paint;
-			case BLUE:
-				paint.setColor(Color.BLUE);
-				return paint;
-			case RED:
-				paint.setColor(Color.RED);
-				return paint;
-			case GREEN:
-				paint.setColor(Color.GREEN);
-				return paint;
-			case YELLOW:
-				paint.setColor(Color.YELLOW);
-				return paint;
-			case WHITE:
-				paint.setColor(Color.WHITE);
-				return paint;
-			default:
-				return paint;
-			}
-		}
-		return paint;
-	}
-
+	/*
+	 * Paint selectColor(Paint paint, String color) { Colors colors =
+	 * Colors.getType(color); if (colors != null) { switch (colors) { case
+	 * BLACK: paint.setColor(Color.BLACK); return paint; case BLUE:
+	 * paint.setColor(Color.BLUE); return paint; case RED:
+	 * paint.setColor(Color.RED); return paint; case GREEN:
+	 * paint.setColor(Color.GREEN); return paint; case YELLOW:
+	 * paint.setColor(Color.YELLOW); return paint; case WHITE:
+	 * paint.setColor(Color.WHITE); return paint; default: return paint; } }
+	 * return paint; }
+	 */
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 		this.canvas = canvas;
-		if (position.getX() != 0 && position.getY() != 0)
-			canvas.translate(position.getX(), position.getY()); // Перемещаем
-																// холст
-		// canvas.scale(zoom / bitMapWidth, zoom / bitMapHeight); // Изменяем
+		// if (position.getX() != 0 && position.getY() != 0)
+		// position.x = (int) (position.getX() * zoomWidth/zoom);
+		// position.y = (int) (position.getY() * zoomWidth/zoom);
+		canvas.translate(position.getX(), position.getY()); // Перемещаем
+		// холст
+		canvas.scale(zoom / zoomWidth, zoom / zoomWidth); // Изменяем
 		// расстояние до холста
+
+		/*
+		 * Paint fullRectPaint = new Paint();
+		 * fullRectPaint.setColor(Color.WHITE);
+		 * fullRectPaint.setStyle(Paint.Style.FILL);
+		 * canvas.drawRect(position.getX(), position.getY(),width,height,
+		 * fullRectPaint);
+		 */
 		canvas.drawBitmap(image, 0, 0, paint); // Рисуем холст
+
 		ListIterator<Figure> iter;
 		iter = model.getIter();
 		// paint.setAntiAlias(true);
 		while (iter.hasNext()) {
 			drawObject(canvas, iter.next());
 		}
-		paint.setColor(Color.BLACK);
+		// paint.setColor(Color.BLACK);
 		for (int i = 0; i < track.trackRace.size() - 1; i++) {
 			Point point = track.trackRace.get(i);
 			Point point1 = track.trackRace.get(i + 1);
@@ -362,9 +407,14 @@ public class Draw extends View {
 		int action = e.getActionMasked(); // Действие
 		if (action == MotionEvent.ACTION_DOWN
 				|| action == MotionEvent.ACTION_POINTER_DOWN) {
-			fingers.add(index, new Finger(id, (int) e.getX(index), (int) e.getY(index)));
-			previous = new Point((int) e.getX(), (int) e.getY());
-			setMovingFigure(model.isBoundary(previous));
+			fingers.add(index,
+					new Finger(id, (int) ((e.getX(index) - position.getX())),
+							(int) ((e.getY(index) - position.getY())), false));
+			// handler.postDelayed(longPress, 1000);
+			previous = new Point(
+					(int) ((e.getX(index) - position.getX()) * (zoomWidth / zoom)),
+					(int) ((e.getY(index) - position.getY()) * (zoomWidth / zoom)));
+			setMovingFigure(model.isInsideAndNotLine(previous));
 			// movingFigure = model.isBoundary(previous);
 			if (getMovingFigure() != null) {
 				setMode(2);
@@ -374,27 +424,100 @@ public class Draw extends View {
 				countOfFinger++;
 			} else {
 				setMode(1);
-				// mode = 1;
-				track.addPoint(previous);
+				if (drawingMode) {
+					// mode = 1;
+					track.addPoint(previous);
+				}
 			}
 			invalidate();
 		} else
-		/*
-		 * if (e.getAction() == MotionEvent.ACTION_POINTER_UP) {
-		 * fingers.remove(fingers.get(index)); // Удаляем // палец, // который
-		 * был // отпущен if (mode == 3) { countOfFinger--; } }
-		 */
 		if (action == MotionEvent.ACTION_UP
 				|| action == MotionEvent.ACTION_POINTER_UP) {
-			Finger fing = fingers.get(index);
-			if (fing != null)
-				fingers.remove(fing); // Удаляем
+			 Finger finger = fingers.get(index);
+			if (finger != null) {
+				if (System.currentTimeMillis() - finger.wasDown < 100
+						&& finger.wasDown - lastTapTime < 200
+						&& finger.wasDown - lastTapTime > 0
+						&& checkDistance(finger.Now, lastTapPosition) < getDensity() * 25) {
+					if (getMode() == 2) {
+						/*Builder builder = new AlertDialog.Builder(getContext());
+						String[] items = { "Красный", "Зелёный", "Синий",
+								"Чёрный", "Белый", "Жёлый" };
+						final AlertDialog dialog = builder
+								.setTitle("Выберите цвет фигуры")
+								.setItems(items,
+										new DialogInterface.OnClickListener() {
+											public void onClick(
+													DialogInterface dialog,
+													int which) {
+												int[] colors = { Color.RED,
+														Color.GREEN,
+														Color.BLUE,
+														Color.BLACK,
+														Color.WHITE,
+														Color.YELLOW };
+												getMovingFigure().setColor(
+														colors[which]);
+											}
+										}).create();
+						dialog.show();*/
+						AlertDialog.Builder alert = new AlertDialog.Builder(getContext());
+
+						alert.setTitle("Заголовок");
+						alert.setMessage("Сообщение");
+						// Добавим поле ввода
+						final EditText input = new EditText(getContext());
+						alert.setView(input);
+
+						alert.setPositiveButton("ОК", new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int whichButton) {
+						  String value = input.getText().toString();
+						  // Получили значение введенных данных!
+							getMovingFigure().setText(value);
+						 // canvas.drawText(value, fingers.get(0).Now.getX(), fingers.get(0).Now.getY(), paint);
+						  }
+						});
+
+						alert.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+						  public void onClick(DialogInterface dialog, int whichButton) {
+						    // Если отменили.
+						  }
+						});
+
+						alert.show();
+					} else {
+						Builder builder = new AlertDialog.Builder(getContext());
+						String[] items = { "Красный", "Зелёный", "Синий",
+								"Чёрный", "Белый", "Жёлый" };
+						final AlertDialog dialog1 = builder
+								.setTitle("Выберите цвет кисти")
+								.setItems(items,
+										new DialogInterface.OnClickListener() {
+											public void onClick(
+													DialogInterface dialog,
+													int which) {
+												int[] colors = { Color.RED,
+														Color.GREEN,
+														Color.BLUE,
+														Color.BLACK,
+														Color.WHITE,
+														Color.YELLOW };
+												paint.setColor(colors[which]);
+											}
+										}).create();
+						dialog1.show();
+					}
+				}
+				lastTapTime = System.currentTimeMillis();
+				lastTapPosition = finger.Now;
+				fingers.remove(finger); // Удаляем
+			}
 			// палец,
 			// который был
 			// отпущен
-			if (mode == 1) {
+			if (drawingMode) {
 				recognizer = new Recognizer(1);
-				if (track.trackRace.size() > 2) {
+				if (track.trackRace.size() > 3) {
 					Figure figure = recognizer.recognize(track);
 					if (figure != null) {
 						if (figure.getClassName().equals("Line")) {
@@ -426,66 +549,82 @@ public class Draw extends View {
 								return true;
 							}
 						}
-						figure.setColor("Black");
+						figure.setColor(paint.getColor());
 						model.addFigure(figure);
 					}
 				}
 				track = new Track();
 			} else {
 				countOfFinger--;
-			    setMode(0);
+				setMode(0);
 			}
 			invalidate();
 		} else if (action == MotionEvent.ACTION_MOVE) {
 			for (int n = 0; n < fingers.size(); n++) { // Обновляем
 				// положение
 				// всех пальцев
-				fingers.get(n).setNow((int) e.getX(n), (int) e.getY(n));
+				fingers.get(n).setNow((int) ((e.getX(n) - position.getX())),
+						(int) ((e.getY(n) - position.getY())));
 			}
-			Point point = new Point((int) e.getX(), (int) e.getY());
-			if (mode == 1) {
+			Point point = new Point(
+					(int) ((e.getX() - position.getX()) * (zoomWidth / zoom)),
+					(int) ((e.getY() - position.getY()) * (zoomWidth / zoom)));
+			if (drawingMode) {
 				track.addPoint(point);
 			} else {
-				if (fingers.size() >= 2) {
-					int yDis, xDis;
-					yDis = Math.abs(fingers.get(0).Now.getY() - fingers.get(1).Now
-							.getY())
-							- Math.abs(fingers.get(0).Before.getY() - fingers.get(1).Before
-									.getY());
-					xDis = Math.abs(fingers.get(0).Now.getX() - fingers.get(1).Now
-							.getX())
-							- Math.abs(fingers.get(0).Before.getX() - fingers.get(1).Before
-									.getX()); /*
-											 * float now =
-											 * checkDistance(fingers.get(0).Now,
-											 * fingers.get(1).Now); float before
-											 * =
-											 * checkDistance(fingers.get(0).Before
-											 * , fingers.get(1).Before);
-											 */
-					Figure fig = getMovingFigure();
-					int i = model.figureList.indexOf(fig);
-					if (rx + xDis > 10) {
-						while (rx + xDis + fig.getPoint().getX() > bitMapWidth)
-							xDis = xDis - 1;
-						fig.setRx(rx + xDis);
-					} else
-						fig.setRx(10);
-					if (ry + yDis > 10) {
-						while (ry + yDis + fig.getPoint().getY() > bitMapHeight)
-							yDis = yDis - 1;
-						fig.setRy(ry + yDis);
-					} else
-						fig.setRy(10);
-					model.figureList.set(i, fig);
-				} else if (getMode() == 2) {
-					Figure fig = getMovingFigure();
-					int i = model.figureList.indexOf(fig);
-					fig.move(new Point(fig.getPoint().getX()
-							+ (point.getX() - previous.getX()), fig.getPoint()
-							.getY() + (point.getY() - previous.getY())));
-					model.figureList.set(i, fig);
-					previous = new Point(point.getX(), point.getY());
+				if (getMode() == 2) {
+					if (fingers.size() >= 2) {
+						int yDis, xDis;
+						yDis = Math.abs(fingers.get(0).Now.getY()
+								- fingers.get(1).Now.getY())
+								- Math.abs(fingers.get(0).Before.getY()
+										- fingers.get(1).Before.getY());
+						xDis = Math.abs(fingers.get(0).Now.getX()
+								- fingers.get(1).Now.getX())
+								- Math.abs(fingers.get(0).Before.getX()
+										- fingers.get(1).Before.getX());
+						Figure fig = getMovingFigure();
+						int i = model.figureList.indexOf(fig);
+						if (rx + xDis > 5) {
+							while (rx + xDis + fig.getPoint().getX() > bitMapWidth)
+								xDis = xDis - 1;
+							fig.setRx(rx + xDis);
+						} else
+							fig.setRx(5);
+						if (ry + yDis > 5) {
+							while (ry + yDis + fig.getPoint().getY() > bitMapWidth)
+								yDis = yDis - 1;
+							fig.setRy(ry + yDis);
+						} else
+							fig.setRy(5);
+						rx = fig.getRx();
+						ry = fig.getRy();
+						model.figureList.set(i, fig);
+					} else {
+						Figure fig = getMovingFigure();
+						int i = model.figureList.indexOf(fig);
+						fig.move(new Point(fig.getPoint().getX()
+								+ (point.getX() - previous.getX()), fig
+								.getPoint().getY()
+								+ (point.getY() - previous.getY())));
+						model.figureList.set(i, fig);
+						previous = new Point(point.getX(), point.getY());
+
+					}
+				} else {
+					if (fingers.size() >= 2) {
+						float now = checkDistance(fingers.get(0).Now,
+								fingers.get(1).Now);
+						float before = checkDistance(fingers.get(0).Before,
+								fingers.get(1).Before);
+						float oldSize = zoom;
+						zoom = Math.max(now - before + zoom, getDensity() * 25);
+						position.x -= (zoom - oldSize) / 2;
+						position.y -= (zoom - oldSize) / 2;
+					} else {
+						position.x += point.getX() - previous.getX();
+						position.y += point.getY() - previous.getY();
+					}
 				}
 			}
 			invalidate();
@@ -505,13 +644,17 @@ public class Draw extends View {
 		return true;
 	}
 
-	static float checkDistance(Point p1, Point p2) { // Функция вычисления
-														// расстояния между
-														// двумя точками
+	static float checkDistance(Point p1, Point p2) {
 		return FloatMath.sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y)
 				* (p1.y - p2.y));
 	}
 
+	/*
+	 * Runnable longPress = new Runnable() { public void run() {
+	 * if(fingers.size() > 0 && fingers.get(0).enabledLongTouch) {
+	 * fingers.get(0).enabledLongTouch = false; drawingMode = !drawingMode; //
+	 * vibrator.vibrate(80); } } };
+	 */
 	public int getMode() {
 		return mode;
 	}
@@ -617,5 +760,13 @@ public class Draw extends View {
 				return new Point((int) x2, (int) y2);
 		} else
 			return null;
+	}
+
+	public static float getDensity() {
+		return density;
+	}
+
+	public void setDensity(float density) {
+		this.density = density;
 	}
 }

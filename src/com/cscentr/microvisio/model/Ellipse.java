@@ -8,7 +8,7 @@ public class Ellipse extends Figure {
 	private Point leftBottom;
 	private Point rightBottom;
 
-	public Ellipse(Point pCentre, int irx, int iry, int isize, String sColor) {
+	public Ellipse(Point pCentre, int irx, int iry, int isize, int sColor) {
 		super(pCentre, irx, iry, isize, sColor, "Ellipse");
 		calculatePoint();
 		constant = 15;

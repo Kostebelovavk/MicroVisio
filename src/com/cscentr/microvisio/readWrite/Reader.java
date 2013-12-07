@@ -40,48 +40,52 @@ public class Reader {
 			Scanner scanner = new Scanner(sdFile);
 			// читаем содержимое
 			while (scanner.hasNextLine()) {
-				String st = scanner.next();
-				if (!scanner.hasNextInt()) {
-					st = scanner.next();
+				if (scanner.hasNext()) {
+					String st = scanner.next();
+					if (!scanner.hasNextInt()) {
+						st = scanner.next();
+					}
+					if (st.equals("Ellipse")) {
+						Point centre = new Point(scanner.nextInt(),
+								scanner.nextInt());
+						int rx = scanner.nextInt();
+						int ry = scanner.nextInt();
+						int size = scanner.nextInt();
+						int color = scanner.nextInt();
+						Ellipse ellipse = new Ellipse(centre, rx, ry, size,
+								color);
+						model.addFigure(ellipse);
+					} else if (st.equals("Rectangle")) {
+						Point centre = new Point(scanner.nextInt(),
+								scanner.nextInt());
+						int rx = scanner.nextInt();
+						int ry = scanner.nextInt();
+						int size = scanner.nextInt();
+						int color = scanner.nextInt();
+						Rectangle rectangle = new Rectangle(centre, rx, ry,
+								size, color);
+						model.addFigure(rectangle);
+					} else if (st.equals("Line")) {
+						int firstID = scanner.nextInt();
+						int secondID = scanner.nextInt();
+						int size = scanner.nextInt();
+						int color = scanner.nextInt();
+						Line line = new Line(model.figureList.get(firstID),
+								model.figureList.get(secondID), size, color);
+						model.addFigure(line);
+					} else if (st.equals("Arrow")) {
+						int firstID = scanner.nextInt();
+						int secondID = scanner.nextInt();
+						int size = scanner.nextInt();
+						int color = scanner.nextInt();
+						Line arrow = new Line(model.figureList.get(firstID),
+								model.figureList.get(secondID), size, color);
+						arrow.setArrow(1);
+						model.addFigure(arrow);
+					}
 				}
-				if (st.equals("Ellipse")) {
-					Point centre = new Point(scanner.nextInt(),
-							scanner.nextInt());
-					int rx = scanner.nextInt();
-					int ry = scanner.nextInt();
-					int size = scanner.nextInt();
-					String color = scanner.next();
-					Ellipse ellipse = new Ellipse(centre, rx, ry, size, color);
-					model.addFigure(ellipse);
-				} else if (st.equals("Rectangle")) {
-					Point centre = new Point(scanner.nextInt(),
-							scanner.nextInt());
-					int rx = scanner.nextInt();
-					int ry = scanner.nextInt();
-					int size = scanner.nextInt();
-					String color = scanner.next();
-					Rectangle rectangle = new Rectangle(centre, rx, ry, size,
-							color);
-					model.addFigure(rectangle);
-				} else if (st.equals("Line")) {
-					int firstID = scanner.nextInt();
-					int secondID = scanner.nextInt();
-					int size = scanner.nextInt();
-					String color = scanner.next();
-					Line line = new Line(model.figureList.get(firstID),
-							model.figureList.get(secondID), size, color);
-					model.addFigure(line);
-				}
-				else if (st.equals("Arrow")) {
-					int firstID = scanner.nextInt();
-					int secondID = scanner.nextInt();
-					int size = scanner.nextInt();
-					String color = scanner.next();
-					Line arrow = new Line(model.figureList.get(firstID),
-							model.figureList.get(secondID), size, color);
-					arrow.setArrow(1);
-					model.addFigure(arrow);
-				}
+				else
+					break;
 			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -105,7 +109,7 @@ public class Reader {
 				int rx = scanner.nextInt();
 				int ry = scanner.nextInt();
 				int size = scanner.nextInt();
-				String color = scanner.next();
+				int color = scanner.nextInt();
 				Ellipse ellipse = new Ellipse(centre, rx, ry, size, color);
 				model.addFigure(ellipse);
 			} else if (st.equals("Rectangle")) {
@@ -113,14 +117,14 @@ public class Reader {
 				int rx = scanner.nextInt();
 				int ry = scanner.nextInt();
 				int size = scanner.nextInt();
-				String color = scanner.next();
+				int color = scanner.nextInt();
 				Rectangle rectangle = new Rectangle(centre, rx, ry, size, color);
 				model.addFigure(rectangle);
 			} else if (st.equals("Line")) {
 				int firstID = scanner.nextInt();
 				int secondID = scanner.nextInt();
 				int size = scanner.nextInt();
-				String color = scanner.next();
+				int color = scanner.nextInt();
 				Line line = new Line(model.figureList.get(firstID),
 						model.figureList.get(secondID), size, color);
 				model.addFigure(line);

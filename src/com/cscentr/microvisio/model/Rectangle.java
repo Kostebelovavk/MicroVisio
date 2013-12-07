@@ -8,7 +8,7 @@ public class Rectangle extends Figure {
 	private Point rightBottom;
 	private int constant;
 
-	public Rectangle(Point pCentre, int irx, int iry, int isize, String sColor) {
+	public Rectangle(Point pCentre, int irx, int iry, int isize, int sColor) {
 		super(pCentre, irx, iry, isize, sColor, "Rectangle");
 		calculatePoint();
 		constant = 10;

@@ -6,13 +6,13 @@ public class Line extends Figure {
 	private int hatching; // 0-не удаление, 1-горизантальное, -1-вертикальное
 	private int arrow; // 0-не стрелка, 1-стрелка, -1-стрелка на оборот
 
-	public Line(Point pleftTop, Point prightBottom, int isize, String sColor) {
+	public Line(Point pleftTop, Point prightBottom, int isize, int sColor) {
 		super(pleftTop, prightBottom, isize, sColor, "Line");
 		setHatching(0);
 		setArrow(0);
 	}
 
-	public Line(Figure fFirst, Figure fSecond, int isize, String sColor) {
+	public Line(Figure fFirst, Figure fSecond, int isize, int sColor) {
 		super(
 				new Point(
 						((fFirst.getPoint().x + fFirst.getRx()) + (fSecond.getPoint().x - fSecond
@@ -29,7 +29,7 @@ public class Line extends Figure {
 
 	}
 
-	public Line(Point pCentre, int irx, int iry, int isize, String sColor) {
+	public Line(Point pCentre, int irx, int iry, int isize, int sColor) {
 		super(pCentre, irx, iry, isize, sColor, "Line");
 	}
 
