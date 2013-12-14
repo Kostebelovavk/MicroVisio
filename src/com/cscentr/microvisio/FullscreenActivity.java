@@ -1,11 +1,19 @@
 package com.cscentr.microvisio;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
+
 import com.cscentr.microvisio.draw.Draw;
 import com.cscentr.microvisio.model.Model;
 import com.cscentr.microvisio.readWrite.Reader;
 import com.cscentr.microvisio.readWrite.Writer;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -24,8 +32,19 @@ public class FullscreenActivity extends Activity {
 	Draw d;
 
 	public class FileDialogDepends {
-		public FileDialogDepends refresh(String filename) {
-			read.readFileSD(filename, model);
+		public FileDialogDepends refresh(String filename){
+			if (filename.contains("txt")) {
+			try {
+				read.readFileSD(filename, model);
+			}
+			catch (FileNotFoundException e) {
+				Toast toast = Toast.makeText(getApplicationContext(), "Файл не найден",Toast.LENGTH_SHORT);
+				toast.setGravity(Gravity.CENTER, 0, 0);
+				toast.show();
+			}
+			}
+			//else
+				//read.readXmlFile(filename, model, getContext());
 			// refresh();
 			return this;
 		}
@@ -56,12 +75,31 @@ public class FullscreenActivity extends Activity {
 		case R.id.openDialog:
 			openDialog();
 			return true;
+		case R.id.saveDialog:
+			try {
+				saveDialog();
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalStateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return true;
 		case R.id.help:
 			showHelp();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}
+	}
+
+	private void saveDialog() throws IllegalArgumentException, IllegalStateException, IOException {
+		// TODO Auto-generated method stub
+		write.writeXmlFile("text1.xml", model, getContext());
 	}
 
 	private void openDialog() {
@@ -97,16 +135,32 @@ public class FullscreenActivity extends Activity {
 		// TODO Auto-generated method stub
 
 	}
-
+	
+	public Context getContext(){
+		return context;
+	}
+	public void setContext(Context context1){
+		context =  context1;
+	}
+	private Context context;
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		model = new Model();
 		read = new Reader();
 		write = new Writer();
 
-	   // Resources res = this.getResources();
-		//read.readFromTxtFile(res.openRawResource(R.raw.textfile), model);
-	   // write.writeFileSD("Test1.txt", model);
+		setContext(this);
+		try {
+		Resources res = this.getResources();
+		read.readFromTxtFile(res.openRawResource(R.raw.textfile), model);
+		}
+		catch (FileNotFoundException e) {
+			Toast toast = Toast.makeText(getApplicationContext(), "Файл не найден",Toast.LENGTH_SHORT);
+			toast.setGravity(Gravity.CENTER, 0, 0);
+			toast.show();
+		}
+		
+	    //write.writeFileSD("Test1.txt", model);
 		//model = new Model();
 	   // new FileDialog(this).openFileDialog(new FileDialogDepends());
 		// Узнаем размеры экрана из ресурсов

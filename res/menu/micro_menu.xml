@@ -7,4 +7,6 @@
           android:title="@string/openDialog" />
     <item android:id="@+id/help"
           android:title="@string/help" />
+     <item android:id="@+id/saveDialog"
+          android:title="@string/saveDialog" />
     </menu>

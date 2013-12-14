@@ -20,6 +20,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.os.Vibrator;
@@ -175,16 +176,24 @@ public class Draw extends View {
 		 */
 	}
 
+	private int minTextSize = 2;
+
 	void drawObject(Canvas canvas, Ellipse ellipse) {
 		Paint mypaint = new Paint();
 		mypaint.setStyle(Paint.Style.FILL);
 		mypaint.setColor(ellipse.getColor());
 		mypaint.setStrokeWidth(ellipse.getSize() * getDensity());
 		mypaint.setStyle(Style.STROKE);
-		if (!ellipse.getText().equals(""))
-		{
-			mypaint.setTextSize(15);
-			canvas.drawText(ellipse.getText(), ellipse.getPoint().getX(), ellipse.getPoint().getY(), mypaint);
+		if (!ellipse.getText().equals("")) {
+			setTextWidth(mypaint, ellipse);
+			if (ellipse.getText().length() > 1)
+				canvas.drawText(ellipse.getText(), (int) (ellipse.getPoint()
+						.getX() - ellipse.getRx() * 0.8), ellipse.getPoint()
+						.getY(), mypaint);
+			else
+				canvas.drawText(ellipse.getText(), (int) (ellipse.getPoint()
+						.getX() - ellipse.getRx() * 0.8), (int) (ellipse
+						.getPoint().getY() + ellipse.getRy() * 0.9), mypaint);
 		}
 		RectF rect = new RectF(ellipse.getPoint().getX() - ellipse.getRx(),
 				ellipse.getPoint().getY() - ellipse.getRy(), ellipse.getPoint()
@@ -199,10 +208,18 @@ public class Draw extends View {
 		mypaint.setColor(rectangle.getColor());
 		mypaint.setStrokeWidth(rectangle.getSize() * getDensity());
 		mypaint.setStyle(Style.STROKE);
-		if (!rectangle.getText().equals(""))
-		{
-			mypaint.setTextSize(15);
-			canvas.drawText(rectangle.getText(), rectangle.getPoint().getX(), rectangle.getPoint().getY(), mypaint);
+		if (!rectangle.getText().equals("")) {
+			setTextWidth(mypaint, rectangle);
+			if (rectangle.getText().length() > 1)
+				canvas.drawText(rectangle.getText(), (int) (rectangle
+						.getPoint().getX() - rectangle.getRx() * 0.8),
+						(int) (rectangle.getPoint().getY()), mypaint);
+			else
+				canvas.drawText(
+						rectangle.getText(),
+						(int) (rectangle.getPoint().getX() - rectangle.getRx() * 0.8),
+						(int) (rectangle.getPoint().getY() + rectangle.getRy() * 0.9),
+						mypaint);
 		}
 		rectangle.calculatePoint();
 		canvas.drawRect(rectangle.getLeftTop().getX(), rectangle.getLeftTop()
@@ -301,12 +318,6 @@ public class Draw extends View {
 						(float) (second.getX() + w * Math.sin(angelLine - 45)),
 						(float) (second.getY() + w * Math.cos(angelLine - 45)),
 						mypaint);
-				canvas.drawLine(
-						(float) (second.getX() + w * Math.sin(angelLine - 45)),
-						(float) (second.getY() + w * Math.cos(angelLine - 45)),
-						(float) (second.getX() + w * Math.sin(angelLine + 45)),
-						(float) (second.getY() + w * Math.cos(angelLine + 45)),
-						mypaint);
 			}
 		}
 	}
@@ -333,17 +344,17 @@ public class Draw extends View {
 			drawObject(canvas, (Rectangle) figure);
 	}
 
-	/*
-	 * Paint selectColor(Paint paint, String color) { Colors colors =
-	 * Colors.getType(color); if (colors != null) { switch (colors) { case
-	 * BLACK: paint.setColor(Color.BLACK); return paint; case BLUE:
-	 * paint.setColor(Color.BLUE); return paint; case RED:
-	 * paint.setColor(Color.RED); return paint; case GREEN:
-	 * paint.setColor(Color.GREEN); return paint; case YELLOW:
-	 * paint.setColor(Color.YELLOW); return paint; case WHITE:
-	 * paint.setColor(Color.WHITE); return paint; default: return paint; } }
-	 * return paint; }
-	 */
+	void setTextWidth(Paint mypaint, Figure figure) {
+		//Rect bounds = new Rect();
+		int size = minTextSize;
+		do {
+			mypaint.setTextSize(++size);
+			//bounds = new Rect();
+			//paint.getTextBounds(figure.getText(), 0, 1, bounds);
+		} while (mypaint.measureText(figure.getText()) < figure.getRx() * 1.6);
+				//&& bounds.height() < figure.getRy());
+	}
+
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 		this.canvas = canvas;
@@ -392,6 +403,7 @@ public class Draw extends View {
 
 	int countOfFinger = 0;
 	int rx = 0, ry = 0;
+	private Point previousForFigure;
 
 	public boolean onTouchEvent(MotionEvent e) {
 		int index = e.getActionIndex();
@@ -411,10 +423,12 @@ public class Draw extends View {
 					new Finger(id, (int) ((e.getX(index) - position.getX())),
 							(int) ((e.getY(index) - position.getY())), false));
 			// handler.postDelayed(longPress, 1000);
-			previous = new Point(
+			previous = new Point((int) ((e.getX(index) - position.getX())),
+					(int) ((e.getY(index) - position.getY())));
+			previousForFigure = new Point(
 					(int) ((e.getX(index) - position.getX()) * (zoomWidth / zoom)),
 					(int) ((e.getY(index) - position.getY()) * (zoomWidth / zoom)));
-			setMovingFigure(model.isInsideAndNotLine(previous));
+			setMovingFigure(model.isInsideAndNotLine(previousForFigure));
 			// movingFigure = model.isBoundary(previous);
 			if (getMovingFigure() != null) {
 				setMode(2);
@@ -426,91 +440,90 @@ public class Draw extends View {
 				setMode(1);
 				if (drawingMode) {
 					// mode = 1;
-					track.addPoint(previous);
+					track.addPoint(previousForFigure);
 				}
 			}
 			invalidate();
-		} else
-		if (action == MotionEvent.ACTION_UP
+		} else if (action == MotionEvent.ACTION_UP
 				|| action == MotionEvent.ACTION_POINTER_UP) {
-			 Finger finger = fingers.get(index);
+			Finger finger = fingers.get(index);
 			if (finger != null) {
 				if (System.currentTimeMillis() - finger.wasDown < 100
 						&& finger.wasDown - lastTapTime < 200
 						&& finger.wasDown - lastTapTime > 0
 						&& checkDistance(finger.Now, lastTapPosition) < getDensity() * 25) {
 					if (getMode() == 2) {
-						/*Builder builder = new AlertDialog.Builder(getContext());
-						String[] items = { "Красный", "Зелёный", "Синий",
-								"Чёрный", "Белый", "Жёлый" };
-						final AlertDialog dialog = builder
-								.setTitle("Выберите цвет фигуры")
-								.setItems(items,
-										new DialogInterface.OnClickListener() {
-											public void onClick(
-													DialogInterface dialog,
-													int which) {
-												int[] colors = { Color.RED,
-														Color.GREEN,
-														Color.BLUE,
-														Color.BLACK,
-														Color.WHITE,
-														Color.YELLOW };
-												getMovingFigure().setColor(
-														colors[which]);
-											}
-										}).create();
-						dialog.show();*/
-						AlertDialog.Builder alert = new AlertDialog.Builder(getContext());
+						/*
+						 * Builder builder = new
+						 * AlertDialog.Builder(getContext()); String[] items = {
+						 * "Красный", "Зелёный", "Синий", "Чёрный", "Белый",
+						 * "Жёлый" }; final AlertDialog dialog = builder
+						 * .setTitle("Выберите цвет фигуры") .setItems(items,
+						 * new DialogInterface.OnClickListener() { public void
+						 * onClick( DialogInterface dialog, int which) { int[]
+						 * colors = { Color.RED, Color.GREEN, Color.BLUE,
+						 * Color.BLACK, Color.WHITE, Color.YELLOW };
+						 * getMovingFigure().setColor( colors[which]); }
+						 * }).create(); dialog.show();
+						 */
+						AlertDialog.Builder alert = new AlertDialog.Builder(
+								getContext());
 
 						alert.setTitle("Заголовок");
 						alert.setMessage("Сообщение");
 						// Добавим поле ввода
 						final EditText input = new EditText(getContext());
 						alert.setView(input);
+						input.setText(getMovingFigure().getText());
+						alert.setPositiveButton("ОК",
+								new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog,
+											int whichButton) {
+										String value = input.getText()
+												.toString();
+										// Получили значение введенных данных!
+										getMovingFigure().setText(value);
+										// canvas.drawText(value,
+										// fingers.get(0).Now.getX(),
+										// fingers.get(0).Now.getY(), paint);
+									}
+								});
 
-						alert.setPositiveButton("ОК", new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int whichButton) {
-						  String value = input.getText().toString();
-						  // Получили значение введенных данных!
-							getMovingFigure().setText(value);
-						 // canvas.drawText(value, fingers.get(0).Now.getX(), fingers.get(0).Now.getY(), paint);
-						  }
-						});
-
-						alert.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
-						  public void onClick(DialogInterface dialog, int whichButton) {
-						    // Если отменили.
-						  }
-						});
+						alert.setNegativeButton("Отмена",
+								new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog,
+											int whichButton) {
+										// Если отменили.
+									}
+								});
 
 						alert.show();
 					} else {
-						Builder builder = new AlertDialog.Builder(getContext());
-						String[] items = { "Красный", "Зелёный", "Синий",
-								"Чёрный", "Белый", "Жёлый" };
-						final AlertDialog dialog1 = builder
-								.setTitle("Выберите цвет кисти")
-								.setItems(items,
-										new DialogInterface.OnClickListener() {
-											public void onClick(
-													DialogInterface dialog,
-													int which) {
-												int[] colors = { Color.RED,
-														Color.GREEN,
-														Color.BLUE,
-														Color.BLACK,
-														Color.WHITE,
-														Color.YELLOW };
-												paint.setColor(colors[which]);
-											}
-										}).create();
-						dialog1.show();
+						/*
+						 * Builder builder = new
+						 * AlertDialog.Builder(getContext()); String[] items = {
+						 * "Красный", "Зелёный", "Синий", "Чёрный", "Белый",
+						 * "Жёлый" }; final AlertDialog dialog1 = builder
+						 * .setTitle("Выберите цвет кисти") .setItems(items, new
+						 * DialogInterface.OnClickListener() { public void
+						 * onClick( DialogInterface dialog, int which) { int[]
+						 * colors = { Color.RED, Color.GREEN, Color.BLUE,
+						 * Color.BLACK, Color.WHITE, Color.YELLOW };
+						 * paint.setColor(colors[which]); } }).create();
+						 * dialog1.show();
+						 */
+						new ColorPickerDialog(getContext(),
+								new ColorPickerDialog.OnColorChangedListener() {
+									public void colorChanged(int color) {
+										paint.setColor(color);
+									}
+								}, paint.getColor()).show();
 					}
 				}
 				lastTapTime = System.currentTimeMillis();
 				lastTapPosition = finger.Now;
 				fingers.remove(finger); // Удаляем
+				setMode(0);
 			}
 			// палец,
 			// который был
@@ -566,11 +579,13 @@ public class Draw extends View {
 				fingers.get(n).setNow((int) ((e.getX(n) - position.getX())),
 						(int) ((e.getY(n) - position.getY())));
 			}
-			Point point = new Point(
-					(int) ((e.getX() - position.getX()) * (zoomWidth / zoom)),
-					(int) ((e.getY() - position.getY()) * (zoomWidth / zoom)));
+			Point point = new Point((int) ((e.getX(0) - position.getX())),
+					(int) ((e.getY(0) - position.getY())));
+			Point pointForFigure = new Point(
+					(int) ((e.getX(0) - position.getX()) * (zoomWidth / zoom)),
+					(int) ((e.getY(0) - position.getY()) * (zoomWidth / zoom)));
 			if (drawingMode) {
-				track.addPoint(point);
+				track.addPoint(pointForFigure);
 			} else {
 				if (getMode() == 2) {
 					if (fingers.size() >= 2) {
@@ -604,12 +619,13 @@ public class Draw extends View {
 						Figure fig = getMovingFigure();
 						int i = model.figureList.indexOf(fig);
 						fig.move(new Point(fig.getPoint().getX()
-								+ (point.getX() - previous.getX()), fig
-								.getPoint().getY()
-								+ (point.getY() - previous.getY())));
+								+ (pointForFigure.getX() - previousForFigure
+										.getX()), fig.getPoint().getY()
+								+ (pointForFigure.getY() - previousForFigure
+										.getY())));
 						model.figureList.set(i, fig);
-						previous = new Point(point.getX(), point.getY());
-
+						previousForFigure = new Point(pointForFigure.getX(),
+								pointForFigure.getY());
 					}
 				} else {
 					if (fingers.size() >= 2) {
@@ -618,12 +634,15 @@ public class Draw extends View {
 						float before = checkDistance(fingers.get(0).Before,
 								fingers.get(1).Before);
 						float oldSize = zoom;
-						zoom = Math.max(now - before + zoom, getDensity() * 25);
+						// zoom = now - before + zoom;
+						zoom = Math.max(now - before + zoom, getDensity() * 50);
 						position.x -= (zoom - oldSize) / 2;
 						position.y -= (zoom - oldSize) / 2;
 					} else {
 						position.x += point.getX() - previous.getX();
 						position.y += point.getY() - previous.getY();
+						// previous = new Point(point.getX(), point.getY());
+						// previous = new Point(point.getX(), point.getY());
 					}
 				}
 			}

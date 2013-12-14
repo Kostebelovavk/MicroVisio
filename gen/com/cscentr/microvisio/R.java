@@ -32,6 +32,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int help=0x7f090006;
         public static final int mode=0x7f090003;
         public static final int openDialog=0x7f090005;
+        public static final int saveDialog=0x7f090007;
     }
     public static final class layout {
         public static final int activity_fullscreen=0x7f030000;
@@ -45,13 +46,14 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
     public static final class string {
         public static final int app_name=0x7f060000;
         public static final int color=0x7f060003;
-        public static final int color_pick=0x7f060008;
+        public static final int color_pick=0x7f060009;
         public static final int dummy_button=0x7f060001;
         public static final int dummy_content=0x7f060002;
-        public static final int help=0x7f060005;
-        public static final int mode=0x7f060004;
-        public static final int openDialog=0x7f060006;
-        public static final int select_file=0x7f060007;
+        public static final int help=0x7f060006;
+        public static final int mode=0x7f060005;
+        public static final int openDialog=0x7f060007;
+        public static final int saveDialog=0x7f060004;
+        public static final int select_file=0x7f060008;
     }
     public static final class style {
         /** 
